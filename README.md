@@ -21,7 +21,7 @@ The Email Sender Application is a Python-based desktop tool designed to send per
 ### Installation Steps
 1. Clone or download the repository to your local machine:
     ```bash
-    cd  gmail-api
+    cd  gmail-send-api
     ```
 2. Install required Python packages using `requirements.txt`:
     ```bash
