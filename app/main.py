@@ -71,7 +71,6 @@ class EmailSender(QWidget):
         self.btnSend.setGeometry(350, 420, 200, 40)
         self.btnSend.clicked.connect(self.sendEmails)
 
-        # New widgets for user information and user creation
         self.lblUserCreation = QLabel('Create Users from CSV:', self)
         self.lblUserCreation.move(20, 460)
 
@@ -79,14 +78,24 @@ class EmailSender(QWidget):
         self.btnUserCreation.move(180, 455)
         self.btnUserCreation.clicked.connect(self.browseUserCreation)
 
+
         self.btnCreateUsers = QPushButton('Create Users', self)
         self.btnCreateUsers.setGeometry(350, 455, 200, 40)
         self.btnCreateUsers.clicked.connect(self.createUsers)
 
+        self.btnCreateUsers = QPushButton('delete Users', self)
+        self.btnCreateUsers.setGeometry(350, 490, 200, 40)
+        self.btnCreateUsers.clicked.connect(self.deleteAllUsers)
+
+        self.lblDomain = QLabel('Domain:', self)
+        self.lblDomain.move(20, 530)  # Adjust the position as needed
+
+        self.txtDomain = QLineEdit(self)
+        self.txtDomain.move(150, 525)  # Adjust the position as needed
 
         self.show()
 
-    
+
     def browseData(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open Data File', '', 'CSV Files (*.csv)')
         if fileName:
@@ -125,7 +134,7 @@ class EmailSender(QWidget):
                     i = 0
                     for row in user_creation_reader:
                         i+=1
-                        print(row,"_",i) 
+                        print(row,"_",i)
                         new_user_data = {
                             "name": {
                                 "givenName":  row[2],
@@ -154,11 +163,11 @@ class EmailSender(QWidget):
                 next(data_reader)  # Skip header
                 for row in data_reader:
                     self.data_data.append(row[0])
-            
+
             sender = self.txtSenderEmail.text()
             subject = self.txtSubject.text()
             message_html = self.txtBody.toPlainText()
-            
+
             num_emails = self.spinNumEmails.value()
 
             start_index = 0
@@ -171,7 +180,23 @@ class EmailSender(QWidget):
                 gmail_api.send_emails_(access_token, sender, to_list, subject, message_html)
                 start_index += num_emails
                 end_index = start_index+num_emails
-                
+
+        except Exception as e:
+            print("An error occurred app :", e)
+
+    def deleteAllUsers(self):
+        try:
+            with open(self.userFile, 'r') as user_file:
+                user_reader = csv.reader(user_file)
+                next(user_reader)
+                for row in user_reader:
+                    self.user_data.append(row)
+            domain = self.txtDomain.text()
+            for user in self.user_data:
+                gmail_api = GmailAPI(self.credentialsFile)
+                access_token = gmail_api.auth(user[0], user[1])
+                gmail_api.delete_all_users(access_token,domain)
+
         except Exception as e:
             print("An error occurred app :", e)
 
@@ -179,4 +204,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = EmailSender()
     sys.exit(app.exec_())
-    
