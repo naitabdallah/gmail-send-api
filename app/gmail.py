@@ -3,13 +3,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import base64
 import requests
 import time
 import json
-import base64
 
 class GmailAPI:
     def __init__(self, credentials_file):
@@ -19,12 +16,11 @@ class GmailAPI:
         self.CLIENT_ID = self.credentials['web']['client_id']
         self.CLIENT_SECRET = self.credentials['web']['client_secret']
         self.REDIRECT_URI = self.credentials['web']['redirect_uris'][0]
-        self.SCOPES = ['https://mail.google.com/','https://www.googleapis.com/auth/admin.directory.user','https://www.googleapis.com/auth/gmail.settings.basic','https://www.googleapis.com/auth/gmail.settings.sharing']
+        self.SCOPES = ['https://mail.google.com/','https://www.googleapis.com/auth/admin.directory.user']
     
     def auth(self, email, password):
         driver = webdriver.Chrome()
         authorization_url = f'https://accounts.google.com/o/oauth2/auth?client_id={self.CLIENT_ID}&redirect_uri={self.REDIRECT_URI}&scope={"%20".join(self.SCOPES)}&response_type=code&access_type=offline'
-
         driver.get(authorization_url)
 
         email_input = WebDriverWait(driver, 10).until(
@@ -143,3 +139,44 @@ class GmailAPI:
         else:
             print("Error creating user:", response.text)
             return None
+        
+    import requests
+
+    def delete_all_users(self, access_token, domain):
+        if not access_token:
+            raise ValueError("Access token is required.")
+
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        print(f"delete users {domain} access token : {access_token}")
+        try:
+            next_page_token = None
+            while True:
+                url = f"https://www.googleapis.com/admin/directory/v1/users?domain={domain}"
+                if next_page_token:
+                    url += f"&pageToken={next_page_token}"
+
+                response = requests.get(url,headers)
+                response.raise_for_status()
+                data = response.json()
+                users = data.get('users', [])
+                print("Users found in this page:", len(users))
+
+                for user in users:
+                    user_key = user['id']
+                    delete_user_url = f"https://www.googleapis.com/admin/directory/v1/users/{user_key}"
+                    delete_response = requests.delete(delete_user_url, headers=headers)
+                    
+                    if delete_response.status_code == 204:
+                        print(f"User {user_key} deleted successfully.")
+                    else:
+                        print(f"Error deleting user {user_key}: {delete_response.text}")
+
+                next_page_token = data.get('nextPageToken')
+                if not next_page_token:
+                    break
+
+        except requests.exceptions.RequestException as e:
+            print("Error listing or deleting users:", e)
