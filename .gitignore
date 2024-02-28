@@ -1,3 +1,4 @@
 env
 csv
 credentials
+app/__pycache__
