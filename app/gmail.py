@@ -139,8 +139,6 @@ class GmailAPI:
         else:
             print("Error creating user:", response.text)
             return None
-        
-    import requests
 
     def delete_all_users(self, access_token, domain):
         if not access_token:
@@ -150,11 +148,10 @@ class GmailAPI:
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json'
         }
-        print(f"delete users {domain} access token : {access_token}")
         try:
             next_page_token = None
             while True:
-                url = f"https://www.googleapis.com/admin/directory/v1/users?domain={domain}"
+                url = f"https://www.googleapis.com/admin/directory/v1/users?domain={domain}&access_token={access_token}"
                 if next_page_token:
                     url += f"&pageToken={next_page_token}"
 
